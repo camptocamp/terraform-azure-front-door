@@ -44,7 +44,7 @@ A few concepts which are important to understand this document:
   or:
 
   ```hcl
-  host                           = "4.178.158.213" # blue AKS
+  host                           = "4.3.2.1"       # AKS ip
   host_header                    = "test-berlin-int.apps.blue.shelter-fr-dev.example.com"
   certificate_name_check_enabled = true
   supported_protocols            = ["Https"]
@@ -124,7 +124,7 @@ Optionally, you can also use host_header explicitly:
 
 ```hcl
 aks-berlin-int = {
-  host                           = local.aks_shelter_fr_dev_blue_ip
+  host                           = "4.3.2.1"       # AKS ip
   host_header                    = "test.test.internal.green.shelter-fr-dev.example.com"
   certificate_name_check_enabled = false
   https_redirect_enabled         = false
@@ -142,7 +142,7 @@ The advantage of this solution is that we only need a single origin for the whol
 
 ```hcl
 any-to-aks = {
-  host                           = local.aks_shelter_fr_dev_blue_ip
+  host                           = "4.3.2.1"       # AKS ip
   host_header                    = null
   certificate_name_check_enabled = false
   https_redirect_enabled         = false
@@ -159,7 +159,7 @@ This is the simplest solution, yet security wise is not recommended.
 
 ```hcl
 # any-to-aks = {
-#   host                           = local.aks_shelter_fr_dev_blue_ip
+#   host                           = "4.3.2.1"       # AKS ip
 #   host_header                    = null
 #   certificate_name_check_enabled = false
 #   https_redirect_enabled         = false
