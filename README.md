@@ -1,6 +1,6 @@
 # Architecture
 
-This document and repository is ongoing work for proposing a solution for Azure Front Door (AFD) and origin services mainly focus -but no only- on AKS containers.
+This document and repository is ongoing work for proposing a solution for Azure Front Door (AFD) and origin services mainly focus -but no only- on AKS services.
 The architecture of the solution is based on:
 
 ```bash
