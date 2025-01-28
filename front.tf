@@ -62,7 +62,7 @@ data "azurerm_cdn_frontdoor_firewall_policy" "this" {
 
 resource "azurerm_cdn_frontdoor_security_policy" "this" {
 
-  name                     = "testSecurityPolicy"
+  name                     = "defaultSecurityPolicy"
   cdn_frontdoor_profile_id = azurerm_cdn_frontdoor_profile.this.id
 
   security_policies {
