@@ -34,8 +34,9 @@ resource "azurerm_cdn_frontdoor_custom_domain_association" "this" {
 
 # endpoints
 
-resource "random_id" "front_door_endpoint_name" {
-  count       = 10
+resource "random_id" "front_door_endpoint_random" {
+  for_each = var.origins
+
   byte_length = 8
 }
 
@@ -51,6 +52,25 @@ resource "azurerm_cdn_frontdoor_endpoint" "this" {
   }
 }
 
+# CNAME for customer communication
+resource "random_string" "origin_rand" {
+  for_each = var.origins
+
+  length  = 12
+  special = false
+  numeric = false
+  upper   = false
+}
+
+resource "azurerm_dns_cname_record" "this" {
+  for_each = { for k, v in var.origins : k => v if v.disable_cname_creation != null }
+
+  name                = "${random_string.origin_rand[each.key].result}.shelter"
+  zone_name           = var.dns_zone_name
+  resource_group_name = var.dns_zone_rg_name
+  ttl                 = 300
+  record              = azurerm_cdn_frontdoor_endpoint.this[each.key].host_name
+}
 
 # security
 

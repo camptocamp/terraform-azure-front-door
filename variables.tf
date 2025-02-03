@@ -56,6 +56,7 @@ variable "origins" {
     supported_protocols            = list(string)
     forwarding_protocol            = string
     patterns_to_match              = list(string)
+    disable_cname_creation         = bool
   }))
   default = {
     container-apps-whoami = {
@@ -66,6 +67,7 @@ variable "origins" {
       supported_protocols            = ["Http"]
       forwarding_protocol            = "HttpOnly"
       patterns_to_match              = ["/*"]
+      disable_cname_creation         = false
     }
     aks-whoami = {
       host                           = "test.test.internal.green.shelter-fr-dev.example.com"
@@ -75,6 +77,7 @@ variable "origins" {
       supported_protocols            = ["Https", "Http"]
       forwarding_protocol            = "MatchRequest"
       patterns_to_match              = ["/*"]
+      disable_cname_creation         = false
     }
     aks-berlin-int = {
       host                           = "4.178.158.213"
@@ -84,6 +87,7 @@ variable "origins" {
       supported_protocols            = ["Https", "Http"]
       forwarding_protocol            = "MatchRequest"
       patterns_to_match              = ["/*"]
+      disable_cname_creation         = false
     }
     any-to-aks = {
       host                           = "4.178.158.213"
@@ -93,11 +97,22 @@ variable "origins" {
       supported_protocols            = ["Https", "Http"]
       forwarding_protocol            = "MatchRequest"
       patterns_to_match              = ["/*"]
+      disable_cname_creation         = false
     }
   }
 }
 
 variable "firewall_policy_name" {
   description = "The name of the firewall policy to be used as data source"
+  type        = string
+}
+
+variable "dns_zone_name" {
+  description = "The name of the DNS zone where to create CNAME for customer communication when domain validation is needed."
+  type        = string
+}
+
+variable "dns_zone_rg_name" {
+  description = "The name of the resource group for the DNS zone."
   type        = string
 }
