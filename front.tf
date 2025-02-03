@@ -65,7 +65,7 @@ resource "random_string" "origin_rand" {
 resource "azurerm_dns_cname_record" "this" {
   for_each = { for k, v in var.origins : k => v if v.disable_cname_creation != null }
 
-  name                = "${random_string.origin_rand[each.key].result}.shelter"
+  name                = "${random_string.origin_rand[each.key].result}.afd"
   zone_name           = var.dns_zone_name
   resource_group_name = var.dns_zone_rg_name
   ttl                 = 300
