@@ -68,15 +68,15 @@ A few concepts which are important to understand this document:
 ```hcl
 
 domains = {
-  "test.test.campto.camp" = {
+  "test.test.example.camp" = {
     cert_type = "ManagedCertificate" # ManagedCertificate or CustomerCertificate
     origin    = "aks-whoami"
   }
-  "integration.berlin.test.campto.camp" = {
+  "integration.berlin.test.example.camp" = {
     cert_type = "ManagedCertificate" # ManagedCertificate or CustomerCertificate
     origin    = "aks-berlin-int"
   }
-  "my-non-assigned-domain.campto.camp" = {
+  "my-non-assigned-domain.example.camp" = {
     cert_type = "ManagedCertificate" # ManagedCertificate or CustomerCertificate
     origin    = null
   }
@@ -136,7 +136,7 @@ aks-berlin-int = {
 
 #### Example 3 - AFD and LB Same Host
 
-Both AFD and Traefik reply to front domains e.g. `test.test.campto.camp`. AKS is firewalled to reply to AFD only. Requires synchronizing certificates between AFD and AKS to have end-to-end TLS.
+Both AFD and Traefik reply to front domains e.g. `test.test.example.camp`. AKS is firewalled to reply to AFD only. Requires synchronizing certificates between AFD and AKS to have end-to-end TLS.
 The advantage of this solution is that we only need a single origin for the whole solution.
 /!\ Certificate generation, rotation and synch seems like a lot of work here.
 
@@ -167,4 +167,103 @@ This is the simplest solution, yet security wise is not recommended.
 #   forwarding_protocol            = "HttpOnly"
 #   patterns_to_match              = ["/*"]
 # }
+```
+
+### Complete example
+
+Here a complete example for demonstration purposes, not intended for PRODUCTION
+
+```hcl
+
+module "frontdoor" {
+  source = "git::https://github.com/camptocamp/terraform-azure-front-door.git?ref=main"
+
+  #source = "../terra-afd"
+
+  front_door_profile_name = "camptocampdev-afd"
+  firewall_policy_name    = "myAppWafPolicy"
+  dns_zone_name           = local.base_domain
+  dns_zone_rg_name        = local.default_resource_group_name
+
+  origins = {
+    container-apps-whoami = {
+      host                           = "whoami.ezcnbffyguc8h3g6.francecentral.azurecontainer.io" # container instance
+      host_header                    = null
+      certificate_name_check_enabled = false
+      https_redirect_enabled         = false
+      supported_protocols            = ["Http"]
+      forwarding_protocol            = "HttpOnly"
+      patterns_to_match              = ["/*"]
+      disable_cname_creation         = false
+    }
+    aks-whoami = {
+      host                           = "test.myapp.internal.green.shelter-fr-dev.example.com"
+      host_header                    = null
+      certificate_name_check_enabled = true
+      https_redirect_enabled         = false
+      supported_protocols            = ["Https", "Http"]
+      forwarding_protocol            = "MatchRequest"
+      patterns_to_match              = ["/*"]
+      disable_cname_creation         = false
+    }
+    aks-camp-apex-redirect = {
+      host                           = "test.myapp.internal.green.shelter-fr-dev.example.com"
+      host_header                    = null
+      certificate_name_check_enabled = true
+      https_redirect_enabled         = false
+      supported_protocols            = ["Https", "Http"]
+      forwarding_protocol            = "MatchRequest"
+      patterns_to_match              = ["/*"]
+      disable_cname_creation         = false
+    }
+    aks-berlin-int = {
+      host                           = "1.2.3.4"
+      host_header                    = "test.myapp.internal.green.shelter-fr-dev.example.com"
+      certificate_name_check_enabled = false
+      https_redirect_enabled         = false
+      supported_protocols            = ["Https", "Http"]
+      forwarding_protocol            = "MatchRequest"
+      patterns_to_match              = ["/*"]
+      disable_cname_creation         = false
+    }
+  }
+
+  domains = {
+    "www.example.camp" = {
+      cert_type = "ManagedCertificate"
+      origin    = "aks-camp-apex-redirect"
+    }
+    "test.myapp.example.camp" = {
+      cert_type = "ManagedCertificate"
+      origin    = "aks-whoami"
+    }
+    "integration.berlin.myapp.example.camp" = {
+      cert_type = "ManagedCertificate"
+      origin    = "aks-berlin-int"
+    }
+    "my-non-assigned-domain.example.camp" = {
+      cert_type = "ManagedCertificate"
+      origin    = null
+    }
+  }
+}
+
+output "frontDoorEndpointHostName" {
+  value = module.frontdoor.front_door_endpoint_host_name
+}
+
+
+output "customer_info_cnames" {
+  value = module.frontdoor.customer_origins_cnames_for_domain_validation
+}
+
+
+output "customer_info_txt_tokens" {
+  value = module.frontdoor.customer_txt_token_for_domain_validation
+}
+
+
+output "customer_info_token_expiration_date" {
+  value = module.frontdoor.customer_txt_token_expiration_date_domain_validation
+}
 ```
