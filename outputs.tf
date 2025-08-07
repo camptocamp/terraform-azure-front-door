@@ -7,9 +7,9 @@ output "customer_origins_cnames_for_domain_validation" {
 }
 
 output "customer_txt_token_for_domain_validation" {
-  value = { for k, v in var.domains : k => azurerm_cdn_frontdoor_custom_domain.this[k].validation_token}
+  value = { for k, v in var.domains : k => azurerm_cdn_frontdoor_custom_domain.this[k].validation_token }
 }
 
 output "customer_txt_token_expiration_date_domain_validation" {
-  value = { for k, v in var.domains : k => azurerm_cdn_frontdoor_custom_domain.this[k].expiration_date}
+  value = { for k, v in var.domains : k => azurerm_cdn_frontdoor_custom_domain.this[k].expiration_date }
 }
