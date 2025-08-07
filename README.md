@@ -4,11 +4,22 @@ This document and repository is ongoing work for proposing a solution for Azure 
 The architecture of the solution is based on:
 
 ```bash
+
+# aks examples
 ┌─────────┐      ┌─────────┐      ┌─────────┐
 │         │  1   │         │   2  │         │
 │  AFD    ├─────►│   LB    ┼─────►│  SVC    │
 │         ◄──────┤         ◄──────┤         │
 └─────────┘  4   └─────────┘   3  └─────────┘
+
+
+# any web app
+┌─────────┐      ┌───────────┐
+│         │  1   │ container │
+│  AFD    ├─────►│   app     │
+│         ◄──────┤           │
+└─────────┘  2   └───────────┘
+
 ```
 
 ## HOST_HEADER behavior matters
