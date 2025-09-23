@@ -47,7 +47,7 @@ variable "domains" {
 }
 
 variable "origins" {
-  description = "Origin information to build Origin, OriginGroup, Route, and Endpoints."
+  description = "Origin information to build Origin, OriginGroup, Route, and Endpoints. Set host_header to an empty string if you want to use the same value as host automatically."
   type = map(object({
     host                           = string
     host_header                    = string
@@ -103,8 +103,21 @@ variable "origins" {
 }
 
 variable "firewall_policy_name" {
-  description = "The name of the firewall policy to be used as data source"
+  description = "The name of the firewall policy to be used as data source. Set to null to disable the firewall policy."
   type        = string
+  default     = null
+}
+
+variable "enable_cors" {
+  description = "Whether to enable CORS for the Front Door. If true, a CORS rule set will be created."
+  type        = bool
+  default     = false
+}
+
+variable "cors_allowed_origin" {
+  description = "The origin to allow for CORS. This will be used in the CORS rule."
+  type        = string
+  default     = ""
 }
 
 variable "dns_zone_name" {
@@ -115,4 +128,43 @@ variable "dns_zone_name" {
 variable "dns_zone_rg_name" {
   description = "The name of the resource group for the DNS zone."
   type        = string
+}
+
+variable "enable_waf" {
+  description = "Whether to enable Web Application Firewall (WAF) for the Front Door."
+  type        = bool
+  default     = false
+}
+
+variable "waf_policy_name" {
+  description = "The name of the WAF policy to create. Only used if enable_waf is true."
+  type        = string
+  default     = "frontdoor-waf-policy"
+}
+
+variable "waf_mode" {
+  description = "The WAF mode. Can be 'Detection' or 'Prevention'."
+  type        = string
+  default     = "Detection"
+  validation {
+    condition     = contains(["Detection", "Prevention"], var.waf_mode)
+    error_message = "The WAF mode must be either 'Detection' or 'Prevention'."
+  }
+}
+
+variable "allowed_countries" {
+  description = "List of allowed country codes. If empty, all countries are allowed."
+  type        = list(string)
+  default = [
+    "AT", "BE", "KH", "HR", "CZ", "DK", "EE", "FI", "FR", "DE",
+    "GR", "HU", "IS", "ID", "IE", "IT", "LA", "LI", "LU", "MY",
+    "MM", "NL", "NO", "PH", "PT", "SG", "SI", "ES", "SE", "CH",
+    "TH", "TR", "GB", "US", "VN", "CA"
+  ]
+}
+
+variable "enable_geo_filtering" {
+  description = "Whether to enable geo-filtering for the Front Door."
+  type        = bool
+  default     = false
 }
