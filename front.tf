@@ -76,18 +76,58 @@ resource "azurerm_dns_cname_record" "this" {
 
 # externally managed firewall policies and rule sets
 data "azurerm_cdn_frontdoor_firewall_policy" "this" {
+  count = var.firewall_policy_name != null ? 1 : 0
+
   name                = var.firewall_policy_name
   resource_group_name = azurerm_resource_group.this.name
 }
 
+# Rule Sets
+resource "azurerm_cdn_frontdoor_rule_set" "cors" {
+  count = var.enable_cors && var.cors_allowed_origin != "" ? 1 : 0
+
+  name                     = "CORS"
+  cdn_frontdoor_profile_id = azurerm_cdn_frontdoor_profile.this.id
+}
+
+resource "azurerm_cdn_frontdoor_rule" "cors_images" {
+  count = var.enable_cors && var.cors_allowed_origin != "" ? 1 : 0
+
+  name                      = "corsimages"
+  cdn_frontdoor_rule_set_id = azurerm_cdn_frontdoor_rule_set.cors[0].id
+  order                     = 1
+  behavior_on_match         = "Continue"
+
+  # Condition
+  conditions {
+    request_header_condition {
+      header_name      = "Origin"
+      operator         = "Equal"
+      match_values     = [var.cors_allowed_origin]
+      transforms       = []
+      negate_condition = false
+    }
+  }
+
+  # Action
+  actions {
+    response_header_action {
+      header_action = "Overwrite"
+      header_name   = "Access-Control-Allow-Origin"
+      value         = var.cors_allowed_origin
+    }
+  }
+}
+
 resource "azurerm_cdn_frontdoor_security_policy" "this" {
+  count = var.firewall_policy_name != null ? 1 : 0
 
   name                     = "defaultSecurityPolicy"
   cdn_frontdoor_profile_id = azurerm_cdn_frontdoor_profile.this.id
 
   security_policies {
     firewall {
-      cdn_frontdoor_firewall_policy_id = data.azurerm_cdn_frontdoor_firewall_policy.this.id
+      cdn_frontdoor_firewall_policy_id = data.azurerm_cdn_frontdoor_firewall_policy.this[0].id
       association {
 
         dynamic "domain" {
