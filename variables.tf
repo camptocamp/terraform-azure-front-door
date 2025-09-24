@@ -121,13 +121,15 @@ variable "cors_allowed_origin" {
 }
 
 variable "dns_zone_name" {
-  description = "The name of the DNS zone where to create CNAME for customer communication when domain validation is needed."
+  description = "The name of the DNS zone where to create CNAME for customer communication when domain validation is needed. Set to null or empty string to disable global DNS zone management."
   type        = string
+  default     = null
 }
 
 variable "dns_zone_rg_name" {
-  description = "The name of the resource group for the DNS zone."
+  description = "The name of the resource group for the DNS zone. Required only if dns_zone_name is set."
   type        = string
+  default     = null
 }
 
 variable "enable_waf" {
@@ -153,13 +155,16 @@ variable "waf_mode" {
 }
 
 variable "allowed_countries" {
-  description = "List of allowed country codes. If empty, all countries are allowed."
+  description = "List of allowed country codes. If empty, all countries are allowed. 'ZZ' is included to avoid false positives for IPs not mapped to any country."
+  type        = list(string)
+  default     = []
+}
+
+variable "high_risk_countries" {
+  description = "List of high-risk country codes known by Azure that should be explicitly blocked."
   type        = list(string)
   default = [
-    "AT", "BE", "KH", "HR", "CZ", "DK", "EE", "FI", "FR", "DE",
-    "GR", "HU", "IS", "ID", "IE", "IT", "LA", "LI", "LU", "MY",
-    "MM", "NL", "NO", "PH", "PT", "SG", "SI", "ES", "SE", "CH",
-    "TH", "TR", "GB", "US", "VN", "CA"
+    "RU", "CN", "KP", "IR", "SY", "SD", "BY", "VE", "CU", "MM"
   ]
 }
 

@@ -4,8 +4,10 @@ output "front_door_endpoint_host_names" {
 }
 
 output "customer_origins_cnames_for_domain_validation" {
-  description = "CNAME records for domain validation"
-  value       = { for k, v in var.origins : k => azurerm_dns_cname_record.this[k].fqdn if v.disable_cname_creation != null }
+  description = "CNAME records for domain validation, empty if no CNAME records are created"
+  value = length(azurerm_dns_cname_record.this) > 0 ? {
+    for k, v in azurerm_dns_cname_record.this : k => v.fqdn
+  } : {}
 }
 
 output "customer_txt_token_for_domain_validation" {

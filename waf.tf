@@ -1,6 +1,4 @@
 # Web Application Firewall (WAF) Configuration
-
-# Create WAF policy
 resource "azurerm_cdn_frontdoor_firewall_policy" "waf" {
   count = var.enable_waf ? 1 : 0
 
@@ -12,47 +10,9 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "waf" {
   custom_block_response_status_code = 403
   custom_block_response_body        = base64encode("Access denied by WAF policy.")
 
-  # Add Microsoft's default rule set (equivalent to AWS's CommonRuleSet)
-  managed_rule {
-    type    = "Microsoft_DefaultRuleSet"
-    version = "2.1"
-    action  = "Log"
-
-    # Override specific rules to set them to "Log" mode (equivalent to AWS's "Count")
-    override {
-      rule_group_name = "XSS"
-      rule {
-        rule_id = "942150"
-        enabled = true
-        action  = "Log"
-      }
-      rule {
-        rule_id = "941100"
-        enabled = true
-        action  = "Log"
-      }
-    }
-
-    override {
-      rule_group_name = "PROTOCOL-ATTACK"
-      rule {
-        rule_id = "921110"
-        enabled = true
-        action  = "Log"
-      }
-    }
-  }
-
-  # Add Microsoft's bot protection rule set
-  managed_rule {
-    type    = "Microsoft_BotManagerRuleSet"
-    version = "1.0"
-    action  = "Log"
-  }
-
-  # Geo-filtering custom rule (equivalent to your ShopinvaderCountryRestric)
+  # Geo-filtering custom rules
   dynamic "custom_rule" {
-    for_each = var.enable_geo_filtering ? [1] : []
+    for_each = var.enable_geo_filtering && length(var.allowed_countries) > 0 ? [1] : []
     content {
       name     = "CountryRestriction"
       enabled  = true
@@ -67,6 +27,39 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "waf" {
         match_values       = var.allowed_countries
       }
     }
+  }
+
+  # Explicit high-risk countries blocking
+  dynamic "custom_rule" {
+    for_each = var.enable_geo_filtering && length(var.high_risk_countries) > 0 ? [1] : []
+    content {
+      name     = "HighRiskCountryRestriction"
+      enabled  = true
+      priority = 90 # Higher priority (lower number) than the allow list
+      type     = "MatchRule"
+      action   = "Block"
+
+      match_condition {
+        match_variable     = "RemoteAddr"
+        operator           = "GeoMatch"
+        negation_condition = false
+        match_values       = var.high_risk_countries
+      }
+    }
+  }
+
+  # Add Microsoft's default rule set
+  managed_rule {
+    type    = "DefaultRuleSet"
+    version = "1.0"
+    action  = "Log"
+  }
+
+  # Add Microsoft's bot protection rule set
+  managed_rule {
+    type    = "Microsoft_BotManagerRuleSet"
+    version = "1.1"
+    action  = "Log"
   }
 }
 
