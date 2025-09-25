@@ -32,7 +32,7 @@ output "frontdoor_resource_group_name" {
 
 output "cors_rule_set_id" {
   description = "The ID of the CORS rule set"
-  value       = var.enable_cors && var.cors_allowed_origin != "" ? azurerm_cdn_frontdoor_rule_set.cors[0].id : null
+  value       = var.enable_cors && (var.cors_allowed_origin != "" || length(var.cors_allowed_origins) > 0) ? azurerm_cdn_frontdoor_rule_set.cors[0].id : null
 }
 
 output "waf_policy_id" {
