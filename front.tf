@@ -53,19 +53,26 @@ resource "azurerm_cdn_frontdoor_endpoint" "this" {
 }
 
 # CNAME for customer communication
-resource "random_string" "origin_rand" {
-  for_each = var.origins
-
-  length  = 12
-  special = false
-  numeric = false
-  upper   = false
+locals {
+  # Create a map of origins to their associated domains
+  origin_domain_map = { for domain_key, domain in var.domains :
+    domain.origin => domain_key... if domain.origin != null
+  }
 }
 
 resource "azurerm_dns_cname_record" "this" {
   for_each = { for k, v in var.origins : k => v if v.disable_cname_creation == false && var.dns_zone_name != null && var.dns_zone_name != "" }
 
-  name                = "${random_string.origin_rand[each.key].result}.afd"
+  name = (
+    # Check if the origin has any domain associated with it
+    contains(keys(local.origin_domain_map), each.key)
+    ?
+    # If yes, take the first part of the first domain (before the first dot)
+    split(".", element(local.origin_domain_map[each.key], 0))[0]
+    :
+    # If no domain is associated, use the origin name with "-afd" suffix
+    "${each.key}-afd"
+  )
   zone_name           = var.dns_zone_name
   resource_group_name = var.dns_zone_rg_name
   ttl                 = 300
@@ -84,26 +91,46 @@ data "azurerm_cdn_frontdoor_firewall_policy" "this" {
 
 # Rule Sets
 resource "azurerm_cdn_frontdoor_rule_set" "cors" {
-  count = var.enable_cors && var.cors_allowed_origin != "" ? 1 : 0
+  count = var.enable_cors && (var.cors_allowed_origin != "" || length(var.cors_allowed_origins) > 0) ? 1 : 0
 
   name                     = "CORS"
   cdn_frontdoor_profile_id = azurerm_cdn_frontdoor_profile.this.id
 }
 
-resource "azurerm_cdn_frontdoor_rule" "cors_images" {
-  count = var.enable_cors && var.cors_allowed_origin != "" ? 1 : 0
+# Unified CORS rules for both single and multiple origins
+resource "azurerm_cdn_frontdoor_rule" "cors_origins" {
+  for_each = var.enable_cors ? (
+    toset(
+      concat(
+        var.cors_allowed_origin != "" ? [var.cors_allowed_origin] : [],
+        var.cors_allowed_origins
+      )
+    )
+  ) : []
 
-  name                      = "corsimages"
+  name = "corsorigin${index(
+    concat(
+      var.cors_allowed_origin != "" ? [var.cors_allowed_origin] : [],
+      var.cors_allowed_origins
+    ),
+    each.value
+  )}"
   cdn_frontdoor_rule_set_id = azurerm_cdn_frontdoor_rule_set.cors[0].id
-  order                     = 1
-  behavior_on_match         = "Continue"
+  order = 100 + length(each.value) + index(
+    sort(concat(
+      var.cors_allowed_origin != "" ? [var.cors_allowed_origin] : [],
+      var.cors_allowed_origins
+    )),
+    each.value
+  ) * 10
+  behavior_on_match = "Continue"
 
   # Condition
   conditions {
     request_header_condition {
       header_name      = "Origin"
       operator         = "Equal"
-      match_values     = [var.cors_allowed_origin]
+      match_values     = [each.value]
       transforms       = []
       negate_condition = false
     }
@@ -114,7 +141,7 @@ resource "azurerm_cdn_frontdoor_rule" "cors_images" {
     response_header_action {
       header_action = "Overwrite"
       header_name   = "Access-Control-Allow-Origin"
-      value         = var.cors_allowed_origin
+      value         = each.value
     }
   }
 }

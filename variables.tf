@@ -114,8 +114,14 @@ variable "enable_cors" {
   default     = false
 }
 
+variable "cors_allowed_origins" {
+  description = "List of origins to allow for CORS. These will be used in the CORS rules."
+  type        = list(string)
+  default     = []
+}
+
 variable "cors_allowed_origin" {
-  description = "The origin to allow for CORS. This will be used in the CORS rule."
+  description = "The origin to allow for CORS. This will be used in the CORS rule. Deprecated: Use cors_allowed_origins instead."
   type        = string
   default     = ""
 }
