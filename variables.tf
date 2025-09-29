@@ -179,3 +179,23 @@ variable "enable_geo_filtering" {
   type        = bool
   default     = false
 }
+
+# URL Redirection functionality for Azure Front Door
+# Variables
+variable "enable_url_redirect" {
+  description = "Whether to enable URL redirection rules."
+  type        = bool
+  default     = false
+}
+
+variable "redirect_rules" {
+  description = "Map of URL redirection rules."
+  type = map(object({
+    source_host      = string
+    destination_host = string
+    redirect_type    = string
+    preserve_path    = bool
+    preserve_query   = bool
+  }))
+  default = {}
+}

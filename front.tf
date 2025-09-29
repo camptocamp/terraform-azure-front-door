@@ -97,6 +97,8 @@ resource "azurerm_cdn_frontdoor_rule_set" "cors" {
   cdn_frontdoor_profile_id = azurerm_cdn_frontdoor_profile.this.id
 }
 
+
+
 # Unified CORS rules for both single and multiple origins
 resource "azurerm_cdn_frontdoor_rule" "cors_origins" {
   for_each = var.enable_cors ? (
