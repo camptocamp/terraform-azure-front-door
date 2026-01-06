@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.0](https://github.com/camptocamp/terraform-azure-front-door/compare/v1.0.0...v1.1.0) (2026-01-06)
+
+
+### Features
+
+* adapt module to be used for shopinvader ([9b49783](https://github.com/camptocamp/terraform-azure-front-door/commit/9b497837e9f2b82a7bc7bb1da642f0f03d9b4113))
+* add https redirection rules ([d2a191d](https://github.com/camptocamp/terraform-azure-front-door/commit/d2a191dceb2ac150b178374457d5b1c0784545d3))
+* extend cors rules to be for one/multiple domains ([6fdb6b7](https://github.com/camptocamp/terraform-azure-front-door/commit/6fdb6b7203bfafa5c279da1194a900a7fd8d4779))
+* remove managed waf managed rules, it requires frontdoor Premium ([d89f5ed](https://github.com/camptocamp/terraform-azure-front-door/commit/d89f5ed88124942b59b048a4873031d20775f1cc))
+
 ## 1.0.0 (2025-08-07)
 
 
