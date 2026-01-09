@@ -91,7 +91,7 @@ data "azurerm_cdn_frontdoor_firewall_policy" "this" {
 
 # Rule Sets
 resource "azurerm_cdn_frontdoor_rule_set" "cors" {
-  count = var.enable_cors && (var.cors_allowed_origin != "" || length(var.cors_allowed_origins) > 0) ? 1 : 0
+  count = length(var.cors_allowed_origins) > 0 ? 1 : 0
 
   name                     = "CORS"
   cdn_frontdoor_profile_id = azurerm_cdn_frontdoor_profile.this.id
@@ -99,46 +99,23 @@ resource "azurerm_cdn_frontdoor_rule_set" "cors" {
 
 
 
-# Unified CORS rules for both single and multiple origins
-resource "azurerm_cdn_frontdoor_rule" "cors_origins" {
-  for_each = var.enable_cors ? (
-    toset(
-      concat(
-        var.cors_allowed_origin != "" ? [var.cors_allowed_origin] : [],
-        var.cors_allowed_origins
-      )
-    )
-  ) : []
+# CORS rules - one rule per allowed origin
+resource "azurerm_cdn_frontdoor_rule" "cors" {
+  for_each = toset(var.cors_allowed_origins)
 
-  name = "corsorigin${index(
-    concat(
-      var.cors_allowed_origin != "" ? [var.cors_allowed_origin] : [],
-      var.cors_allowed_origins
-    ),
-    each.value
-  )}"
+  name                      = "cors${substr(md5(each.value), 0, 8)}"
   cdn_frontdoor_rule_set_id = azurerm_cdn_frontdoor_rule_set.cors[0].id
-  order = 100 + length(each.value) + index(
-    sort(concat(
-      var.cors_allowed_origin != "" ? [var.cors_allowed_origin] : [],
-      var.cors_allowed_origins
-    )),
-    each.value
-  ) * 10
-  behavior_on_match = "Continue"
+  order                     = 100
+  behavior_on_match         = "Continue"
 
-  # Condition
   conditions {
     request_header_condition {
-      header_name      = "Origin"
-      operator         = "Equal"
-      match_values     = [each.value]
-      transforms       = []
-      negate_condition = false
+      header_name  = "Origin"
+      operator     = "Equal"
+      match_values = [each.value]
     }
   }
 
-  # Action
   actions {
     response_header_action {
       header_action = "Overwrite"
