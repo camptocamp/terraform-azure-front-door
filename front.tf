@@ -91,7 +91,7 @@ data "azurerm_cdn_frontdoor_firewall_policy" "this" {
 
 # Rule Sets
 resource "azurerm_cdn_frontdoor_rule_set" "cors" {
-  count = var.enable_cors && (var.cors_allowed_origin != "" || length(var.cors_allowed_origins) > 0) ? 1 : 0
+  count = var.enable_cors && length(var.cors_allowed_origins) > 0 ? 1 : 0
 
   name                     = "CORS"
   cdn_frontdoor_profile_id = azurerm_cdn_frontdoor_profile.this.id
@@ -101,31 +101,12 @@ resource "azurerm_cdn_frontdoor_rule_set" "cors" {
 
 # Unified CORS rules for both single and multiple origins
 resource "azurerm_cdn_frontdoor_rule" "cors_origins" {
-  for_each = var.enable_cors ? (
-    toset(
-      concat(
-        var.cors_allowed_origin != "" ? [var.cors_allowed_origin] : [],
-        var.cors_allowed_origins
-      )
-    )
-  ) : []
+  for_each = var.enable_cors ? toset(var.cors_allowed_origins) : []
 
-  name = "corsorigin${index(
-    concat(
-      var.cors_allowed_origin != "" ? [var.cors_allowed_origin] : [],
-      var.cors_allowed_origins
-    ),
-    each.value
-  )}"
+  name                      = "corsorigin${index(var.cors_allowed_origins, each.value)}"
   cdn_frontdoor_rule_set_id = azurerm_cdn_frontdoor_rule_set.cors[0].id
-  order = 100 + length(each.value) + index(
-    sort(concat(
-      var.cors_allowed_origin != "" ? [var.cors_allowed_origin] : [],
-      var.cors_allowed_origins
-    )),
-    each.value
-  ) * 10
-  behavior_on_match = "Continue"
+  order                     = 100 + length(each.value) + index(sort(var.cors_allowed_origins), each.value) * 10
+  behavior_on_match         = "Continue"
 
   # Condition
   conditions {
