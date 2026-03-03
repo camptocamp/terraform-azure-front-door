@@ -120,11 +120,6 @@ variable "cors_allowed_origins" {
   default     = []
 }
 
-variable "cors_allowed_origin" {
-  description = "The origin to allow for CORS. This will be used in the CORS rule. Deprecated: Use cors_allowed_origins instead."
-  type        = string
-  default     = ""
-}
 
 variable "dns_zone_name" {
   description = "The name of the DNS zone where to create CNAME for customer communication when domain validation is needed. Set to null or empty string to disable global DNS zone management."
