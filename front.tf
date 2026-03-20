@@ -42,8 +42,8 @@ resource "azurerm_cdn_frontdoor_endpoint" "this" {
 
 
 moved {
-  from = "azurerm_dns_cname_record.this"
-  to   = "azurerm_dns_cname_record.camptocamp_cloud_cannonical_names"
+  from = azurerm_dns_cname_record.this
+  to   = azurerm_dns_cname_record.camptocamp_cloud_cannonical_names
 }
 
 ######################################################################
