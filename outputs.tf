@@ -3,13 +3,6 @@ output "front_door_endpoint_host_names" {
   value       = { for k, v in azurerm_cdn_frontdoor_endpoint.this : k => v.host_name }
 }
 
-output "customer_origins_cnames_for_domain_validation" {
-  description = "CNAME records for domain validation, empty if no CNAME records are created"
-  value = length(azurerm_dns_cname_record.camptocamp_cloud_cannonical_names) > 0 ? {
-    for k, v in azurerm_dns_cname_record.camptocamp_cloud_cannonical_names : k => v.fqdn
-  } : {}
-}
-
 output "customer_txt_token_for_domain_validation" {
   description = "TXT token values for domain validation"
   value       = { for k, v in local.camptocamp_cloud_cannonical_names : k => azurerm_cdn_frontdoor_custom_domain.this[k].validation_token }
