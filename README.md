@@ -278,3 +278,101 @@ output "customer_info_token_expiration_date" {
   value = module.frontdoor.customer_txt_token_expiration_date_domain_validation
 }
 ```
+
+### Known issues
+
+Origins cannot use self-signed certificates, these are not accepted by AFD
+[see this post](https://learn.microsoft.com/en-us/answers/questions/5527327/frontdoor-to-origin-self-signed-certificate-for-pr)
+and [this other post too](https://learn.microsoft.com/en-us/azure/frontdoor/end-to-end-tls?pivots=front-door-standard-premium#backend-tls-connection-azure-front-door-to-origin)
+
+
+#### end-to-end TLS w/ Traefik
+
+TLS subjects and Host headers do not need to match:
+
+host: whoami.dev.shelter.camptocamp.cloud
+tls config: `subject: CN=*.apps.blue.shelter-fr-dev.camptocamp.com`
+
+for debugging it is useful to do port-forwards to traefik service
+and then test with curl:
+
+```bash 
+curl -k --connect-to whoami.dev.shelter.camptocamp.cloud:443:127.0.0.1:8443 https://whoami.dev.shelter.camptocamp.cloud/ -v
+* Connecting to hostname: 127.0.0.1
+* Connecting to port: 8443
+*   Trying 127.0.0.1:8443...
+* Connected to (nil) (127.0.0.1) port 8443 (#0)
+* ALPN, offering h2
+* ALPN, offering http/1.1
+* TLSv1.0 (OUT), TLS header, Certificate Status (22):
+* TLSv1.3 (OUT), TLS handshake, Client hello (1):
+* TLSv1.2 (IN), TLS header, Certificate Status (22):
+* TLSv1.3 (IN), TLS handshake, Server hello (2):
+* TLSv1.2 (IN), TLS header, Finished (20):
+* TLSv1.2 (IN), TLS header, Supplemental data (23):
+* TLSv1.3 (IN), TLS handshake, Encrypted Extensions (8):
+* TLSv1.2 (IN), TLS header, Supplemental data (23):
+* TLSv1.3 (IN), TLS handshake, Certificate (11):
+* TLSv1.2 (IN), TLS header, Supplemental data (23):
+* TLSv1.3 (IN), TLS handshake, CERT verify (15):
+* TLSv1.2 (IN), TLS header, Supplemental data (23):
+* TLSv1.3 (IN), TLS handshake, Finished (20):
+* TLSv1.2 (OUT), TLS header, Finished (20):
+* TLSv1.3 (OUT), TLS change cipher, Change cipher spec (1):
+* TLSv1.2 (OUT), TLS header, Supplemental data (23):
+* TLSv1.3 (OUT), TLS handshake, Finished (20):
+* SSL connection using TLSv1.3 / TLS_AES_128_GCM_SHA256
+* ALPN, server accepted to use h2
+* Server certificate:
+*  subject: CN=*.apps.blue.shelter-fr-dev.camptocamp.com
+*  start date: Jan 27 12:37:48 2026 GMT
+*  expire date: Apr 27 12:37:47 2026 GMT
+*  issuer: C=US; O=Let's Encrypt; CN=R13
+*  SSL certificate verify result: unable to get local issuer certificate (20), continuing anyway.
+* Using HTTP2, server supports multiplexing
+* Connection state changed (HTTP/2 confirmed)
+* Copying HTTP/2 data in stream buffer to connection buffer after upgrade: len=0
+* TLSv1.2 (OUT), TLS header, Supplemental data (23):
+* TLSv1.2 (OUT), TLS header, Supplemental data (23):
+* TLSv1.2 (OUT), TLS header, Supplemental data (23):
+* Using Stream ID: 1 (easy handle 0x5906a0bad9f0)
+* TLSv1.2 (OUT), TLS header, Supplemental data (23):
+> GET / HTTP/2
+> Host: whoami.dev.shelter.camptocamp.cloud
+> user-agent: curl/7.81.0
+> accept: */*
+> 
+* TLSv1.2 (IN), TLS header, Supplemental data (23):
+* TLSv1.3 (IN), TLS handshake, Newsession Ticket (4):
+* TLSv1.2 (IN), TLS header, Supplemental data (23):
+* Connection state changed (MAX_CONCURRENT_STREAMS == 250)!
+* TLSv1.2 (OUT), TLS header, Supplemental data (23):
+* TLSv1.2 (IN), TLS header, Supplemental data (23):
+* TLSv1.2 (IN), TLS header, Supplemental data (23):
+* TLSv1.2 (IN), TLS header, Supplemental data (23):
+< HTTP/2 200 
+< content-type: text/plain; charset=utf-8
+< date: Thu, 19 Mar 2026 09:22:37 GMT
+< content-length: 444
+< 
+* TLSv1.2 (IN), TLS header, Supplemental data (23):
+Hostname: whoami-867db88df-7w9dj
+IP: 127.0.0.1
+IP: ::1
+IP: 10.10.33.106
+IP: fe80::2c79:fbff:fe98:9e13
+RemoteAddr: 10.10.32.103:34170
+GET / HTTP/1.1
+Host: whoami.dev.shelter.camptocamp.cloud
+User-Agent: curl/7.81.0
+Accept: */*
+Accept-Encoding: gzip
+X-Forwarded-For: 127.0.0.1
+X-Forwarded-Host: whoami.dev.shelter.camptocamp.cloud
+X-Forwarded-Port: 443
+X-Forwarded-Proto: https
+X-Forwarded-Server: traefik-gvzvk
+X-Real-Ip: 127.0.0.1
+
+* Connection #0 to host (nil) left intact
+```
