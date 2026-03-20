@@ -54,10 +54,15 @@ locals {
   }
 }
 ######################################################################
-# Cannonical CNAMES: <project-instance>.shelter.camptocamp.cloud
+# Cannonical Domain names: <project-instance>.<dns_zone_name>
 #
-# these are used for customer communication
-# azure endpoints names should not be comunicated to customers
+# Spec:
+# * are used for customer communication
+# * they should not change under any circumstances, even if the underlying Azure endpoints change
+# * azure endpoints names should not be comunicated to customers
+#
+
+# Create CNAME and TXT records for domain validation and redirection
 resource "azurerm_dns_cname_record" "camptocamp_cloud_cannonical_names" {
 
   for_each = local.camptocamp_cloud_cannonical_names
@@ -67,6 +72,21 @@ resource "azurerm_dns_cname_record" "camptocamp_cloud_cannonical_names" {
   resource_group_name = var.dns_zone_rg_name
   ttl                 = 300
   record              = azurerm_cdn_frontdoor_endpoint.this[each.value.origin].host_name
+}
+
+# Create CNAME and TXT records for domain validation and redirection
+resource "azurerm_dns_txt_record" "camptocamp_cloud_domain_validation_tokens" {
+
+  for_each = local.camptocamp_cloud_cannonical_names
+
+  name                = "_dnsauth.${replace(each.key, ".${var.dns_zone_name}", "")}"
+  zone_name           = var.dns_zone_name
+  resource_group_name = var.dns_zone_rg_name
+  ttl                 = 300
+
+  record {
+    value = azurerm_cdn_frontdoor_custom_domain.this[each.key].validation_token
+  }
 }
 
 # security
