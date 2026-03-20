@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.1](https://github.com/camptocamp/terraform-azure-front-door/compare/v1.1.0...v1.1.1) (2026-03-20)
+
+
+### Bug Fixes
+
+* broken ref ([465d486](https://github.com/camptocamp/terraform-azure-front-door/commit/465d48665f6ee53d18c8930b075d31ff6d4ec764))
+* **cname:** refact cannonical CNAME code ([bce776b](https://github.com/camptocamp/terraform-azure-front-door/commit/bce776b696e75fba526e1a10df19b9a617f72211))
+* dns_auth TXT key and useless output ([04c8454](https://github.com/camptocamp/terraform-azure-front-door/commit/04c8454d8a8279480207886108284ff16c8b6243))
+* moved syntax ([310d13a](https://github.com/camptocamp/terraform-azure-front-door/commit/310d13ae3c5b7e3e26ad58074c13883174fa68a2))
+* **output:** use expression for cannonical_camptocamp_cloud_names ([3fe213d](https://github.com/camptocamp/terraform-azure-front-door/commit/3fe213d919bdce0aad0105a36c493d0e9cdf2994))
+
 ## [1.1.0](https://github.com/camptocamp/terraform-azure-front-door/compare/v1.0.0...v1.1.0) (2026-01-06)
 
 
