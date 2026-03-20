@@ -66,7 +66,7 @@ resource "azurerm_dns_cname_record" "camptocamp_cloud_cannonical_names" {
   zone_name           = var.dns_zone_name
   resource_group_name = var.dns_zone_rg_name
   ttl                 = 300
-  record              = azurerm_cdn_frontdoor_endpoint.this[each.key].host_name
+  record              = azurerm_cdn_frontdoor_endpoint.this[each.value.origin].host_name
 }
 
 # security
