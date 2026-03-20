@@ -46,6 +46,13 @@ moved {
   to   = azurerm_dns_cname_record.camptocamp_cloud_cannonical_names
 }
 
+
+locals {
+  camptocamp_cloud_cannonical_names = {
+    for k, v in var.domains : k => v
+    if v.origin != null && var.dns_zone_name != null && endswith(k, var.dns_zone_name)
+  }
+}
 ######################################################################
 # Cannonical CNAMES: <project-instance>.shelter.camptocamp.cloud
 #
@@ -53,10 +60,7 @@ moved {
 # azure endpoints names should not be comunicated to customers
 resource "azurerm_dns_cname_record" "camptocamp_cloud_cannonical_names" {
 
-  for_each = {
-    for k, v in var.domains : k => v
-    if v.origin != null && var.dns_zone_name != null && endswith(k, var.dns_zone_name)
-  }
+  for_each = local.camptocamp_cloud_cannonical_names
 
   name                = replace(each.key, ".${var.dns_zone_name}", "")
   zone_name           = var.dns_zone_name
