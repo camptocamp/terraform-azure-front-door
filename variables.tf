@@ -26,23 +26,18 @@ variable "front_door_profile_name" {
 variable "domains" {
   description = "Custom domains and their origin association."
   type = map(object({
-    cert_type = string
+    cert_type = optional(string, "ManagedCertificate")
     origin    = string
   }))
 
   default = {
     "test.test.campto.camp" = {
-      cert_type = "ManagedCertificate"
-      origin    = "aks-whoami"
+      origin = "aks-whoami"
     }
     "integration.berlin.test.campto.camp" = {
-      cert_type = "ManagedCertificate"
-      origin    = "aks-berlin-int"
+      origin = "aks-berlin-int"
     }
-    "my-non-assigned-domain.campto.camp" = {
-      cert_type = "ManagedCertificate"
-      origin    = null
-    }
+    "my-non-assigned-domain.campto.camp" = {}
   }
 }
 
