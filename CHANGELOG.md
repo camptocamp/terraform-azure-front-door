@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/camptocamp/terraform-azure-front-door/compare/v1.2.0...v1.3.0) (2026-08-18)
+
+
+### Features
+
+* add optional variable for managed cert ([fc73cd6](https://github.com/camptocamp/terraform-azure-front-door/commit/fc73cd679b0ba1d150528fec1268bacbe24b2d36))
+
 ## [1.2.0](https://github.com/camptocamp/terraform-azure-front-door/compare/v1.1.1...v1.2.0) (2026-03-23)
 
 
