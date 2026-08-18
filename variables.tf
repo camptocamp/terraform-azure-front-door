@@ -27,7 +27,7 @@ variable "domains" {
   description = "Custom domains and their origin association."
   type = map(object({
     cert_type = optional(string, "ManagedCertificate")
-    origin    = string
+    origin    = optional(string)
   }))
 
   default = {
