@@ -1,21 +1,18 @@
-# Web Application Firewall (WAF) Configuration
-resource "azurerm_cdn_frontdoor_firewall_policy" "waf" {
-  count = var.enable_waf ? 1 : 0
+# WAF: one policy per entry in var.waf_policies, attached only to its domains.
 
-  name                              = var.waf_policy_name
-  resource_group_name               = azurerm_resource_group.this.name
-  sku_name                          = azurerm_cdn_frontdoor_profile.this.sku_name
-  enabled                           = true
-  mode                              = var.waf_mode
-  custom_block_response_status_code = 403
-  custom_block_response_body        = base64encode("Access denied by WAF policy.")
+resource "azurerm_cdn_frontdoor_firewall_policy" "this" {
+  for_each = var.waf_policies
 
-  # Geo-filtering custom rules
+  name                = each.key
+  resource_group_name = azurerm_resource_group.this.name
+  sku_name            = azurerm_cdn_frontdoor_profile.this.sku_name
+  mode                = each.value.mode
+
+  # Geo-filtering: block countries not in allowed_countries
   dynamic "custom_rule" {
-    for_each = var.enable_geo_filtering && length(var.allowed_countries) > 0 ? [1] : []
+    for_each = length(each.value.allowed_countries) > 0 ? [1] : []
     content {
-      name     = "CountryRestriction"
-      enabled  = true
+      name     = "AllowedCountries"
       priority = 100
       type     = "MatchRule"
       action   = "Block"
@@ -24,63 +21,54 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "waf" {
         match_variable     = "RemoteAddr"
         operator           = "GeoMatch"
         negation_condition = true
-        match_values       = var.allowed_countries
+        match_values       = each.value.allowed_countries
       }
     }
   }
 
-  # Explicit high-risk countries blocking
   dynamic "custom_rule" {
-    for_each = var.enable_geo_filtering && length(var.high_risk_countries) > 0 ? [1] : []
+    for_each = each.value.custom_rules
     content {
-      name     = "HighRiskCountryRestriction"
-      enabled  = true
-      priority = 90 # Higher priority (lower number) than the allow list
+      name     = custom_rule.key
+      priority = custom_rule.value.priority
       type     = "MatchRule"
-      action   = "Block"
+      action   = custom_rule.value.action
 
       match_condition {
-        match_variable     = "RemoteAddr"
-        operator           = "GeoMatch"
-        negation_condition = false
-        match_values       = var.high_risk_countries
+        match_variable = custom_rule.value.match_variable
+        operator       = custom_rule.value.operator
+        match_values   = custom_rule.value.match_values
       }
     }
   }
 
-  # Add Microsoft's default rule set
-  managed_rule {
-    type    = "DefaultRuleSet"
-    version = "1.0"
-    action  = "Log"
-  }
-
-  # Add Microsoft's bot protection rule set
-  managed_rule {
-    type    = "Microsoft_BotManagerRuleSet"
-    version = "1.1"
-    action  = "Log"
+  dynamic "managed_rule" {
+    for_each = each.value.managed_rules
+    content {
+      type    = managed_rule.value.type
+      version = managed_rule.value.version
+      action  = managed_rule.value.action
+    }
   }
 }
 
-# Associate WAF policy with Front Door security policy
-resource "azurerm_cdn_frontdoor_security_policy" "waf_security_policy" {
-  count = var.enable_waf ? 1 : 0
+resource "azurerm_cdn_frontdoor_security_policy" "waf" {
+  for_each = var.waf_policies
 
-  name                     = "${var.waf_policy_name}-security-policy"
+  name                     = "${each.key}-security-policy"
   cdn_frontdoor_profile_id = azurerm_cdn_frontdoor_profile.this.id
 
   security_policies {
     firewall {
-      cdn_frontdoor_firewall_policy_id = azurerm_cdn_frontdoor_firewall_policy.waf[0].id
+      cdn_frontdoor_firewall_policy_id = azurerm_cdn_frontdoor_firewall_policy.this[each.key].id
 
       association {
         patterns_to_match = ["/*"]
 
         dynamic "domain" {
-          for_each = var.domains
+          for_each = toset(each.value.domains)
           content {
-            cdn_frontdoor_domain_id = azurerm_cdn_frontdoor_custom_domain.this[domain.key].id
+            cdn_frontdoor_domain_id = azurerm_cdn_frontdoor_custom_domain.this[domain.value].id
           }
         }
       }

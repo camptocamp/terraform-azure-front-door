@@ -128,46 +128,26 @@ variable "dns_zone_rg_name" {
   default     = null
 }
 
-variable "enable_waf" {
-  description = "Whether to enable Web Application Firewall (WAF) for the Front Door."
-  type        = bool
-  default     = false
-}
-
-variable "waf_policy_name" {
-  description = "The name of the WAF policy to create. Only used if enable_waf is true."
-  type        = string
-  default     = "frontdoor-waf-policy"
-}
-
-variable "waf_mode" {
-  description = "The WAF mode. Can be 'Detection' or 'Prevention'."
-  type        = string
-  default     = "Detection"
-  validation {
-    condition     = contains(["Detection", "Prevention"], var.waf_mode)
-    error_message = "The WAF mode must be either 'Detection' or 'Prevention'."
-  }
-}
-
-variable "allowed_countries" {
-  description = "List of allowed country codes. If empty, all countries are allowed. 'ZZ' is included to avoid false positives for IPs not mapped to any country."
-  type        = list(string)
-  default     = []
-}
-
-variable "high_risk_countries" {
-  description = "List of high-risk country codes known by Azure that should be explicitly blocked."
-  type        = list(string)
-  default = [
-    "RU", "CN", "KP", "IR", "SY", "SD", "BY", "VE", "CU", "MM"
-  ]
-}
-
-variable "enable_geo_filtering" {
-  description = "Whether to enable geo-filtering for the Front Door."
-  type        = bool
-  default     = false
+variable "waf_policies" {
+  description = "WAF policies keyed by name (letters and digits only), each attached to its listed domains."
+  type = map(object({
+    domains           = list(string)                  # keys of var.domains
+    mode              = optional(string, "Detection") # Detection or Prevention
+    allowed_countries = optional(list(string), [])    # e.g. ["FR", "CH", "ZZ"]
+    custom_rules = optional(map(object({
+      priority       = number
+      action         = string # Allow, Block or Log
+      match_variable = string # e.g. RequestUri, RemoteAddr
+      operator       = string # e.g. Contains, IPMatch
+      match_values   = list(string)
+    })), {})
+    managed_rules = optional(list(object({ # Premium SKU only
+      type    = string
+      version = string
+      action  = string
+    })), [])
+  }))
+  default = {}
 }
 
 # URL Redirection functionality for Azure Front Door
