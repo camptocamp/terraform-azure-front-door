@@ -28,12 +28,12 @@ output "cors_rule_set_id" {
   value       = var.enable_cors && length(var.cors_allowed_origins) > 0 ? azurerm_cdn_frontdoor_rule_set.cors[0].id : null
 }
 
-output "waf_policy_id" {
-  description = "The ID of the WAF policy"
-  value       = var.enable_waf ? azurerm_cdn_frontdoor_firewall_policy.waf[0].id : null
+output "waf_policy_ids" {
+  description = "IDs of the WAF policies, keyed by policy name"
+  value       = { for k, v in azurerm_cdn_frontdoor_firewall_policy.this : k => v.id }
 }
 
-output "waf_security_policy_id" {
-  description = "The ID of the WAF security policy"
-  value       = var.enable_waf ? azurerm_cdn_frontdoor_security_policy.waf_security_policy[0].id : null
+output "waf_security_policy_ids" {
+  description = "IDs of the security policies attaching WAF policies to domains, keyed by WAF policy name"
+  value       = { for k, v in azurerm_cdn_frontdoor_security_policy.waf : k => v.id }
 }
